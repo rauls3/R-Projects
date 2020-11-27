@@ -1,0 +1,230 @@
+---
+title: "Homework 3 -- Intro to Probability and Statistics"
+author: "Raul Bassi"
+date: "30/03/2020"
+output: pdf_document
+---
+
+# Instructions:
+
+**Due:** 04/01 at 11:59PM.
+
+**What am I expecting?** An R Markdown with the answers.
+
+**Have fun!**
+
+
+```{r setup, include=FALSE}
+options(htmltools.dir.version = FALSE)
+r <- getOption("repos")
+r["CRAN"] <- "http://cran.cnr.berkeley.edu/"
+options(repos = r)
+set.seed(12345)
+```
+
+# Changing Minds on Gay Marriage
+
+In this assignment, you will analyze the data from two experiments in which households were canvassed for support on gay marriage.
+
+This exercise is based on: LaCour, M. J., and D. P. Green. 2014. “[When Contact Changes Minds: An Experiment on Transmission of Support for Gay Equality.](http://dx.doi.org/10.1126/science.1256151)” *Science* 346(6215): 1366–69.
+
+**Context:** Canvassers were given a script leading to conversations that averaged about twenty minutes. A distinctive feature of this study is that gay and straight canvassers were randomly assigned to households and canvassers revealed whether they were straight or gay in the course of the conversation. The experiment aims to test the 'contact hypothesis,' which contends that out-group hostility (towards gays in this case) diminishes when people from different groups interact with one another.
+
+-------------------- ----------------------------------------------------------
+ Name                 Description
+ -------------------- ----------------------------------------------------------
+ `study`              Study (1 or 2) 
+ 
+ `treatment`          Treatment assignment: `No contact`, 
+                      `Same-Sex Marriage Script by Gay Canvasser`,
+                      `Same-Sex Marriage Script by Straight Canvasser`,
+                      `Recycling Script by Gay Canvasser`, and
+                      `Recycling Script by Straight Canvasser`
+ 
+ `wave`               Survey wave (1-7). Note that Study 2 lacks wave 5 and 6.
+ 
+ `ssm`                Support for gay marriage (1 to 5).  
+                      Higher scores indicate more support.
+ -------------------------------------------------------------------------------
+
+Each observation of this data set is a respondent giving a response to a five-point survey item on same-sex marriage.  There are two different studies in this data set, involving interviews during 7 different time periods (i.e. 7 waves). In both studies, the first wave consists of the interview before the canvassing treatment occurs. 
+
+Use the [gay.csv](https://raw.githubusercontent.com/umbertomig/intro-prob-stat-FGV/master/datasets/gay.csv) data set.
+
+## Question 1
+
+Explore the dataset. Make histograms of the quantitative variables and barplots of the qualitative variables. Discuss them.
+
+```{r}
+## Load tidyverse
+library(tidyverse)
+
+## Loading the dataset
+gay <- read.csv("https://raw.githubusercontent.com/umbertomig/intro-prob-stat-FGV/master/datasets/gay.csv")
+
+## Subsetting only study 1
+gay <- filter(gay, study==1)
+
+## Erasing the variable `study`
+gay$study <- NULL
+
+## Dataset head
+head(gay, 10)
+
+## Your code here...
+
+hist(gay$ssm, main="GRAFICO 1", xlab="SUPPORT", ylab="Frequency", col.main="red", col.lab="blue")
+
+hist(gay$wave, main="GRAFICO 2", xlab="WAVE", ylab="Frequency", col.main="blue", col.lab="yellow")
+
+barplot(table(gay$treatment))
+
+```
+
+__>> Comparing the graphics it is possible to analyze that when some people are exposed to gay people they tend to support more gar marriage <<__
+
+
+## Question 2
+
+Using the baseline interview wave before the treatment is administered (wave == 1), examine whether randomization was properly conducted. Base your analysis on the three groups:
+
+- 'Same-Sex Marriage Script by Gay Canvasser'
+- 'Same-Sex Marriage Script by Straight Canvasser'
+- 'No Contact.'
+  
+Briefly comment on the results. Would you say that the study was well designed?
+
+```{r}
+## Your code here...
+library(tidyverse)
+
+nc <- subset(gay, subset = (treatment == "No Contact"))
+gc <- subset(gay, subset = (treatment == "Same-Sex Marriage Script by Gay Canvasser"))
+sc <- subset(gay, subset = (treatment == "Same-Sex Marriage Script by Straight Canvasser"))
+
+w1nc <- filter(nc, wave == 1)
+w1gc <- filter(gc, wave == 1)
+w1sc <- filter(sc, wave == 1)
+
+mean(w1nc$ssm)
+mean(w1gc$ssm)
+mean(w1sc$ssm)
+
+## Hint 1. To subset a dataset, do the following:
+## a. load the tidyverse package
+## b. use the function 'filter(.)'
+## c. if you don't know how to use the 'filter(.)', figure it out :)
+
+## Hint 2. 
+## a. after the subset, you need to use the 'tapply(.)' function
+## b. if you are having trouble using 'tapply(.)', see the (.Rmd) slides
+```
+
+__>> I think the study was well designed, since random studies provide better results of society. Moreover, this study is proven to be random, because a property of randomization is that it will give very close results to mean, median, sd, etc...<<__
+
+## Question 3
+
+The second wave of survey was implemented two months after the canvassing. Estimate the average treatment effects (differences in means) of gay and straight canvassers on support for same-sex marriage, separately (wave == 2). Give a brief interpretation of the results.
+
+```{r}
+w2nc <- filter(nc, wave == 2)
+w2gc <- filter(gc, wave == 2)
+w2sc <- filter(sc, wave == 2)
+
+mean(w2nc$ssm)
+mean(w2gc$ssm)
+mean(w2sc$ssm)
+
+#differences
+## Gay (w2 vs w1)
+mean(w2gc$ssm) - mean(w1gc$ssm)
+
+##Straight (w2 vs w1)
+mean(w2sc$ssm) - mean(w1sc$ssm)
+
+
+
+
+## Hint: again, use filter(.) + tapply(.)
+
+## Hint: compute the differences in means for gay versus none
+mean(w2gc$ssm) - mean(w2nc$ssm)
+
+## Hint: compute the differences in means for straight versus none
+mean(w2sc$ssm) - mean(w2nc$ssm)
+
+## Hint: I computed this in the minumum wage slide...
+```
+
+__>> When compared the two waves, it is possible to check that gay canvassing has increased more than straight. When compared to no contact to gay,  no contact has changed more minds, however straights have made more difference than no contact. <<__
+
+
+## Question 4
+
+Check if the results persist in wave 7 of the study. Give a brief interpretation of the results.
+
+```{r}
+w7nc <- filter(nc, wave == 7)
+w7gc <- filter(gc, wave == 7)
+w7sc <- filter(sc, wave == 7)
+
+mean(w7nc$ssm)
+mean(w7gc$ssm)
+mean(w7sc$ssm)
+
+#differences
+## Gay (w7 vs w1)
+mean(w7gc$ssm) - mean(w1gc$ssm)
+
+##Straight (w7 vs w1)
+mean(w7sc$ssm) - mean(w1sc$ssm)
+
+```
+
+__>> In wave 7, compared to wave 1, it is possible to see that contact has changed minds. <<__
+
+# Coronavirus
+
+Rami Krispin build a dataset with coronavirus cases updated daily. The package name is `coronavirus`.
+
+## Question 1
+
+Download the dataset and load it. Find the documentations for this package.
+
+```{r}
+install.packages("coronavirus", repos = 'https://cran.fiocruz.br/') 
+
+```
+```{r}
+install.packages("devtools", repos = 'https://cran.fiocruz.br/')
+```
+
+```{r}
+library(coronavirus) 
+data("coronavirus")
+```
+
+
+__>> Your answer here <<__
+
+## Question 2
+
+Can you find any stackoverflow resources about this package? If not, explain why? If yes, what types of resources?
+
+__>> No, because it is such a recent package.But maybe I did not search this much ;) <<__
+
+## Question 3
+
+Make a table of number of cases by country. The table has to update itself automatically, so when I grade the problem set, the table will be the most updated one. Give a brief discussion on what did you do to solve this problem.
+
+```{r}
+library(dplyr)
+ss <- coronavirus %>% group_by(Country.Region, type) %>%
+  summarise(total_cases = sum(cases)) %>%
+  arrange(-total_cases)
+ss %>% head(534) 
+
+
+```
+
+__>> Just created a subset <<__

@@ -1,0 +1,92 @@
+---
+title: "Apendix"
+author: "Raul Bassi"
+date: "21/10/2020"
+output: pdf_document
+---
+Downloading the Data and the packages used to do the analysis.
+
+```{r include=FALSE}
+library(tidyverse)
+library(stargazer)
+brut <- read.csv('https://raw.githubusercontent.com/2020PB/police-brutality/data_build/all-locations.csv')
+library(dplyr)
+library(ggplot2)
+blm <- read.csv('https://raw.githubusercontent.com/rauls3/Homework/master/BLM_cities.csv')
+blm_treated <- blm[-c(1, 2, 15, 16,17,18,28,29,30,32,33, 34, 35,36,37,38,39,40,43,44,52)]
+```
+
+Chossing the variables that will be used in the study and manipulating the data to show the occurences of violence through different cities in the US.
+
+```{r}
+pb <- brut[c(1,3,4,5)]
+pb$events <- as.vector(matrix(1, nrow(pb), ncol = 1))
+pb1 <- pb %>% group_by(city, state) %>%
+  summarise(total = sum(events)) %>%
+  arrange(city)
+```
+Correcting possible problems in the observables names prearing to merge both datasets
+
+```{r}
+library(tidyr)
+blm_df <- separate(blm_treated, Geography.x, c("city" , "state") , ",")
+```
+```{r}
+stopwords = c("city", "CDP", "town", "(balance)")
+blm_df$city <- gsub(paste0(stopwords,collapse = "|"),"", blm_df$city)
+blm_df$city <- gsub("New York", "New York City", blm_df$city)
+blm_df$city <- gsub("West New York City", "West New York", blm_df$city)
+pb1$city <- gsub("DC", "Washington", pb1$city)
+pb1$state <- gsub("Washington DC", "District of Columbia", pb1$state)
+pb1$city <-gsub("Louisville", "Louisville/Jefferson County metro government ()	", pb1$city)
+pb1$city <-gsub("Nashville", "Nashville-Davidson metropolitan government ()	", pb1$city)
+pb1$city <- gsub("Indianapolis", "Indianapolis  ()	", pb1$city)
+blm_df$city <-gsub("Bay", "Baytown", blm_df$city)
+pb1$city <-gsub("Athens", "Athens-Clarke County unified government ()", pb1$city)
+
+```
+
+```{r}
+ nm1 <- c("city","state")
+ blm_df[nm1] <- lapply(blm_df[nm1], trimws)
+ pb1[nm1] <- lapply(pb1[nm1], trimws)
+ blm_pb <- merge(blm_df, pb1, by= c("city","state"), all = TRUE)
+```
+
+With the datasets merged, I created a dummy variable to represent if the State had slaves presence. And a dummy to show me if the total variable has a number or is NA.
+
+```{r}
+zum <- c("Delaware", "Georgia", "Maryland", "New Jersey", "North Carolina", "South Carolina", "Virginia", "Kentucky", "Tennessee", "Alabama", "Mississippi", "Louisiana", "Missouri", "Arkansas", "Texas", "Florida", "Nevada", "New Mexico")
+blm_pb$slavery_past <- ifelse(blm_pb$state %in% zum, 1, 0)
+blm_pb$ob1 <- ifelse(blm_pb$total >= 0, 1, 0)
+blm_pb$ob1[is.na(blm_pb$ob1)] = 0
+```
+
+Here i create an standard measure to compare different size cities
+```{r}
+options(scipen=999)
+blm_pb$index <- blm_pb$total/blm_pb$TotalPop
+blm_pb$index[is.na(blm_pb$index)] = 0
+```
+
+Now I create a regression with variables that will not come into the final regression in order to create a predict variable for the observables which have NA in the total variable.
+
+```{r}
+BLM1 <- filter(blm_pb, TotalPop >= 0)
+BLM1$total[is.na(BLM1$total)] = 0
+reg1 <- lm(total ~ WhitePovertyRate + deaths + deaths_unarmed + deaths_unarmed_black + deaths_armed_black + deaths_black + deathduring + deaths_protestyear + BlackPop + AsianPop + WhitePop + AsianPoverty + HispanicPop + HispanicPoverty + tot.protests + unarmed_deaths_pc + deaths_pc + unarmed_deaths_black_pc + deaths_black_pc + crime + tot.attend, data = BLM1, na.action = na.omit)
+summary(reg1)
+BLM1$ptotal <- predict(reg1)
+BLM1$ptotal <- ifelse(BLM1$ptotal < 0, 0, BLM1$ptotal)
+BLM1$estimated_total <- ifelse(BLM1$ob1 == 0, BLM1$ptotal, BLM1$total)
+BLM1$oindex <- (BLM1$estimated_total/BLM1$TotalPop)*100000
+BLM <- BLM1[c(1,2,3,4,6,13,23,27,28,34,38,39)]
+```
+
+Now it is all ready to start using causal inference models!
+
+```{r}
+reg_final <- lm(oindex ~ PovertyRate + BlackPovertyRate + PercentBachelor.s + blackmayor + collegeenrollpc + mayorrep + slavery_past, data = BLM, na.action = na.omit)
+summary(reg_final)
+stargazer(reg_final, type = "text", out = "BLM.docx")
+```

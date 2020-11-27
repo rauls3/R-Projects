@@ -1,0 +1,554 @@
+---
+title: "Final -- Intro to Probability and Statistics"
+author: "Raul Bassi - 353108"
+output: pdf_document
+---
+
+```{r, echo=FALSE}
+set.seed(97583)
+```
+
+# Instructions
+
+1. **Due:**: 06/24 at 11:59PM.
+
+2. Send both the `.Rmd` and the compiled `.pdf`. Make sure that you use the right places on e-Class.
+
+3. No collaboration! The work should be yours.
+
+4. The turn-it-in is going to be on.
+
+5. If you use Stackoverflow, or any other Google resources, please make sure to cite it. Provide the link, so we can check.
+
+6. Please double check if you picked the right question group.
+
+7. Grading parameters:
+    - `.Rmd:` have to compile to have positive grade.
+    - If not compiling a `.pdf`, then 50% penalty in the final grade.
+    - `.pdf` has to match with the `.Rmd` you submit.
+    - Coding: has to be efficient and clean
+    - Answer: has to be precise and meaningful
+    - Make sure that you revise your answers before submit the problem set.
+
+\vspace{0.2cm}
+
+***
+
+\vspace{0.2cm}
+
+# Question Groups
+
+\vspace{0.5cm}
+
+## Group 4 - Bias in Self-reported Turnout
+
+Surveys are frequently used to measure political behavior such as voter turnout, but some researchers are concerned about the accuracy of self-reports. In particular, they worry about possible *social desirability bias* where in post-election surveys, respondents who did not vote in an election lie about not having voted because they may feel that they should have voted.  Is such a bias present in the American National Election Studies (ANES)?  The ANES is a nation-wide survey that has been conducted for every election since 1948. The ANES conducts face-to-face interviews with a nationally representative sample of adults. The table below displays the names and descriptions of variables in the `turnout.csv` data file.
+
+--------------------------------------------------------------------------------
+ Name                 Description
+ -------------------- ----------------------------------------------------------
+ `year`               Election year
+ 
+ `VEP`                Voting Eligible Population (in thousands) 
+ 
+ `VAP`                Voting Age Population (in thousands) 
+ 
+ `total`              Total ballots cast for highest office (in thousands) 
+ 
+ `felons`             Total ineligible felons (in thousands) 
+ 
+ `noncitizens`        Total non-citizens (in thousands) 
+ 
+ `overseas`           Total eligible overseas voters (in thousands)
+ 
+ `osvoters`           Total ballots counted by overseas voters (in thousands)
+--------------------------------------------------------------------------------
+
+```{r include=FALSE}
+turnout <- read.csv("https://raw.githubusercontent.com/umbertomig/intro-prob-stat-FGV/master/datasets/turnout.csv")
+library(dplyr)
+```
+
+
+### Question 1
+
+Calculate the turnout rate based on the voting age population or VAP. Note that for this data set, we must add the total number of eligible overseas voters since the *VAP* variable does not include these individuals in the count. Next, calculate the turnout rate using the voting eligible population or VEP. What difference do you observe?
+
+```{r}
+turnout$turnout_rateVAP = (turnout$total/(turnout$VAP + turnout$overseas))*100
+turnout$turnout_rateVEP = (turnout$total/turnout$VEP)*100
+
+```
+I observer that, the VAP turnout rate is always smaller than the VEP 
+
+### Question 2
+
+Compute the difference between *VAP* and *ANES* estimates of turnout rate. How big is the difference on average?  What is the range of the difference? Conduct the same comparison for the VEP and ANES estimates of voter turnout. Briefly comment on the results.
+```{r}
+turnout %>% summarise(mean(ANES - turnout_rateVAP))
+turnout %>% summarise(mean(ANES - turnout_rateVEP))
+```
+The mean of the difference between ANES and VAP is 20, leading to think that per election in the VAP method 20% less population participated in the eletions when compared to ANES statistics. When it comes to VEP, the difference is 16,8%, that is still a big number, leading to think that many people, might have lied on the interviews.
+
+
+### Question 3
+
+Compare the VEP turnout rate with the ANES turnout rate separately for presidential elections and midterm elections.  Note that the data set excludes the year 2006. Does the bias of the ANES vary across election types?
+
+```{r}
+target <- c('2008', '2004', '2000', '1996', '1992','1988','1984','1980')
+target2 <- c('2002', '1998', '1994', '1990', '1986', '1982')
+turn_mid <- turnout %>% filter(year %in% target2)
+turn_pre <- turnout %>% filter(year %in% target)
+turn_pre %>% summarise(mean(ANES - turnout_rateVEP))
+turn_mid %>% summarise((mean(ANES - turnout_rateVEP)))
+```
+Yes, the mean of the difference, in presidential elections, are almost 18%, while midterm elections 15,4%. This results show that people feel more guilty about not voting for president.
+
+
+### Question 4
+
+Divide the data into half by election years such that you subset the data into two periods. Calculate the difference between the VEP turnout rate and the ANES turnout rate separately for each year within each period. Has the bias of the ANES increased over time?
+```{r}
+turnout$difference <- turnout$ANES - turnout$turnout_rateVEP
+turn_b <- turnout %>% filter(year <= '1992')
+turn_b[c(1,12)]
+mean(turn_b$difference)
+turn_a <- turnout %>% filter(year >= '1994')
+turn_a[c(1,12)]
+mean(turn_a$difference)
+```
+Yes, before 1994 the mean of the difference was 15,8% and after that year the mean of the difference increased to 17,8%
+
+### Question 5
+
+The ANES does not interview overseas voters and prisoners. Calculate an adjustment to the 2008 VAP turnout rate. Begin by subtracting the total number of ineligible felons and non-citizens from the VAP to calculate an adjusted VAP. Next, calculate an adjusted VAP turnout rate, taking care to subtract the number of overseas ballots counted from the total ballots in 2008. Compare the adjusted VAP turnout with the unadjusted VAP, VEP, and the ANES turnout rate. Briefly discuss the results.
+
+```{r}
+turnout[is.na(turnout)] <- 0
+turnout$ad_VAPrate <- (turnout$total - turnout$osvoters)/(turnout$VAP - (turnout$felons + turnout$noncit))*100
+turnout[c(1,5,10,11,13)]
+```
+The results show that usually the adjusted VAP rate is a number closer to the VEP rate. Hence, being a higher number, showing that the bias on the ANES, is actually smaller than expected, not much smaller though.
+
+
+\vspace{0.2cm}
+
+***
+
+\vspace{0.2cm}
+
+## Group 8 - Oil, Democracy, and Development
+
+Researchers have theorized that natural resources may have an
+inhibiting effect on the democratization process.  Although 
+there are multiple explanations as to why this might be the case, one hypothesis posits that governments in countries with large natural resource endowments (like oil) are able to fund their operations without taxing civilians. Since representation (and other democratic institutions) are a compromise offered by governments in exchange for tax revenue, resource-rich countries do not need to make this trade. In this exercise, we will not investigate causal effects of oil on democracy.  Instead, we examine whether the association between oil and democracy is consistent with the aforementioned hypothesis.  
+
+This exercise is in part based on Michael L. Ross. (2001). 'Does Oil Hinder Democracy?' *World Politics*, 53:3, pp.325-361.
+
+The data set is in the csv file `resources.csv`.  The names and descriptions of variables are:
+
+-------------------------------------------------------------------------------
+ Name                 Description
+ -------------------- ---------------------------------------------------------
+ `cty_name`           Country name
+ 
+ `year`               Year
+ 
+ `logGDPcp`           Logged GDP per capita 
+ 
+ `regime`             A measure of a country's level of democracy: -10 (authoritarian) 
+                      to 10 (democratic) 
+ 
+ `oil`                Amount of oil exports as a percentage of the country's GDP 
+ 
+ `metal`              Amount of non-fuel mineral exports as a percentage of the country's GDP 
+ 
+ `illit`              Percentage of the population that is illiterate 
+ 
+ `life`               Life expectancy in the country 
+-------------------------------------------------------------------------------
+```{r include=FALSE}
+library(tidyverse)
+library(ggplot2)
+```
+
+### Question 1
+
+Load the dataset and provide summary statistics for all variables.
+
+```{r}
+resources <- read.csv("https://raw.githubusercontent.com/umbertomig/intro-prob-stat-FGV/master/datasets/resources.csv")
+summary(resources)
+```
+
+
+### Question 2
+
+Use scatterplots to examine the bivariate relationship between logged GDP per capita and life expectancy as well as between logged GDP per capita and illiteracy. Be sure to add informative axis labels. Also, compute the correlation separately for each bivariate relationship. Briefly comment on the results.
+```{r}
+ggplot(resources, mapping = (aes(x=life, y=logGDPcp))) + 
+  geom_point()+
+  labs(title = "Life expectancy x GDP per Capita(Log)", 
+       x = "Life expectancy",
+       y = "(Log)GDP per Capita")
+ggplot(resources, mapping = (aes(x=life, y=logGDPcp))) + 
+  geom_smooth(method = 'lm')+
+  labs(title = "Life expectancy x GDP per Capita(Log)", 
+       x = "Life expectancy",
+       y = "(Log)GDP per Capita")
+ggplot(resources, mapping = (aes(x=life, y=logGDPcp))) + 
+  geom_point()+
+  geom_smooth(method = 'lm')
+  labs(title = "Life expectancy x GDP per Capita(Log)", 
+       x = "Life expectancy",
+       y = "(Log)GDP per Capita")
+  ggplot(resources, mapping = (aes(x=illit, y=logGDPcp))) + 
+  geom_point()+
+  labs(title = "Illiteracy rate x GDP per Capita(Log)", 
+       x = "Illiteracy rate",
+       y = "(Log)GDP per Capita")
+ggplot(resources, mapping = (aes(x=illit, y=logGDPcp))) + 
+  geom_smooth(method = 'lm')+
+  labs(title = "Illiteracy rate x GDP per Capita(Log)", 
+       x = "Illiteracy rate",
+       y = "(Log)GDP per Capita")
+ggplot(resources, mapping = (aes(x=illit, y=logGDPcp))) + 
+  geom_point()+
+  geom_smooth(method = 'lm')
+  labs(title = "Illiteracy rate x GDP per Capita(Log)", 
+       x = "Illiteracy rate",
+       y = "(Log)GDP per Capita")
+```
+It is possible to see that, the relation between GDP per Capita and Life expectancy is positive, thus the higher GDP the higher the life expectancy. Also, there is a negative relationship between GDP per Capita and Illiteracy, the higher illiteracy the less GDP per capita.
+
+
+### Question 3
+
+We focus on the following subset of the variables:
+`regime`, `oil`, `logGDPcp`, and `illit`. Remove observations that have missing values in any of these variables. Using the `scale()` function, scale these variables so that each variable has a mean of zero and a standard deviation of one. Fit the k-means clustering algorithm with two clusters. How many observations are assigned to each cluster?  Using the original unstandardized data, compute the means of these variables in each cluster.
+
+```{r}
+res <- resources[c(3,4,5,7)]
+res1 <- res[complete.cases(res), ]
+res2 <- scale(res1)
+k1 <- kmeans(res2, centers = 2, nstart = 5)
+print(k1)
+k2 <- kmeans(res1, 2)
+print(k2)
+
+```
+I used complete.cases, as i saw on StackOverflow (https://stackoverflow.com/questions/4862178/remove-rows-with-all-or-some-nas-missing-values-in-data-frame)
+
+The cluster sizes are 191 and 226 for the standardized, and 259 and 158 for the other.
+
+### Question 4
+
+Using the clusters obtained above, modify the scatterplot between logged GDP per capita and illiteracy rate in the following manner.  Use different colors for the clusters so that we can easily tell the cluster membership of each observation.  In addition, make the size of each circle proportional to the `oil` variable so that oil-rich countries stand out.  Briefly comment on the results.
+```{r}
+e1<-data.frame(res2)
+plot(e1$illit, e1$logGDPcp, col = k1$cluster + 1, main = "Standard")
+points(k1$centers, pch = 10, cex = 2)
+plot(res1$illit, res1$logGDPcp, col = k2$cluster + 1, main = "Non - Standard")
+points(k2$centers, pch = 10, cex = 2)
+```
+The standard version show less variance, while the non standard show more, however the distribution is the same in both. Therefore scaling just diminish the scale but maintain the proportions
+
+
+### Question 5
+
+Repeat the previous two questions but this time with three clusters instead of two. How are the results different? Which clustering model would you prefer and why?
+
+```{r}
+k3 <- kmeans(res2, centers = 3, nstart = 5)
+print(k3)
+plot(e1$illit, e1$logGDPcp, col = k3$cluster + 1, main = "Standard")
+points(k3$centers, pch = 10, cex = 2)
+k4 <- kmeans(res1, 3)
+print(k4)
+plot(res1$illit, res1$logGDPcp, col = k4$cluster + 1, main = "Non - Standard")
+points(k4$centers, pch = 10, cex = 2)
+```
+I prefer with two clusters because I think it is more appropriate for this specific analysis, because the third cluster did not really add something.
+
+\vspace{0.2cm}
+
+***
+
+\vspace{0.2cm}
+
+## Group 12 - The Mathematics of Enigma
+
+The Enigma machine is the most famous cipher machine to date. Nazi Germany used it during World War II to encrypt messages so that enemies could not understand them.  The story of the British cryptanalysts who successfully deciphered Enigma has become the subject of multiple movies *Enigma* (2001); *The Imitation Game* (2014).  In this exercise, we will focus our attention on a simplified version of the Enigma machine, which we name "Little Enigma." Like the real Enigma machine shown in the picture above, this machine consists of two key components.  First, the Little Enigma machine has 5 different *rotors*, each of which comes with 10 pins with numbers ranging from 0 to 9. Second, a component called the *plugboard* contains 26 holes, corresponding to the 26 letters of the alphabet. In
+addition, 13 cables connect all possible pairs of letters. Since a cable has two ends, one can connect, for example, the letter A with any other of the other 25 letters present in the plugboard.
+
+To either encode a message or decode an encrypted message, one must provide the Little Enigma machine with a correct five-digit passcode to align the rotors and a correct configuration of the plugboard. The rotors are set up just like many combination locks. For example, the passcode 9--4--2--4--9 means that five rotors display the numbers 9, 4, 2, 4, and 9 in that order.  In addition, the 13 cables connecting the letters in the plugboard must be appropriately configured. The purpose of the plugboard is thus to scramble the letters.  For example, if B is connected to W, the Little Enigma machine will switch B with W and W with B to encode a message or decode an encoded message.  Thus, a sender types a message on the keyboard, the
+plugboard scrambles the letters, and the message is sent in its
+encrypted form.  A receiver decodes the encrypted message by re-typing it on a paired Little Enigma machine that has the same passcode and plugboard configuration.
+
+### Question 1
+
+How many different five-digit passcodes can be set out of the 5
+rotors?
+
+Knowing that there are 10 different possible numbers that can repeat themselves in 5 spots and the order matters, thus it is a counting principle, thus $10 * 10 * 10 * 10 * 10 = 10^5 = 100000$
+
+### Question 2
+
+How many possible configurations does the plugboard provide?  In other words, how many ways can 26 letters be divided into 13 pairs?
+
+Considering that the order of the letters on the pair does not matter then:
+
+$$\frac{26!}{2! * (26-2)!}$$
+$$\frac{26*25*24!}{2*1!*24!}$$
+$$\frac{26*25}{2}$$
+$$13*25 = 325$$
+
+Answer: 325 pairs
+
+
+### Question 3
+
+Based on the previous two questions, what is the total number of possible settings for the Little Enigma machine?
+
+$$325 * 10^5 = 325 * 100000 = 32500000$$
+
+65000000 possible settings!
+
+### Question 4
+
+Five cryptanalytic machines have been developed to decode 1,500
+messages encrypted by the Little Enigma machine.  The table below presents information on the number of messages assigned to each machine and the machine's failure rate (i.e., the percentage of messages the machine was unable to decode).  Aside from this information, we do not know anything about the assignment of each message to a machine or whether the machine was able to correctly decode the message.
+
+Machine       Number of messages Failure Rate
+------------- ------------------ ------------
+`Banburismus`                300          10%
+`Bombe`                      400           5%
+`Herivel`                    250          15%
+`Crib`                       340          17%
+`Hut 6`                      210          20% 
+
+Suppose that we select one message at random from the pool of all 1,500 messages but found out this message was not properly
+decoded. Which machine is most likely responsible for this mistake?
+
+10% of 300 = 30
+5% of 400 = 20
+15% of 250 = 37,5
+17% of 340 = 57,8
+20% of 210 = 42
+
+Machine       Number of messages Failure Rate Failed Messages
+------------- ------------------ ------------ ---------------
+`Banburismus`                300          10%              30
+`Bombe`                      400           5%              20
+`Herivel`                    250          15%            37,5
+`Crib`                       340          17%            57,8
+`Hut 6`                      210          20%              42
+
+The 'Crib' is most likely responsible for the mistake, since it has 57 not properly decoded messages, that is the highest amount among all machines
+
+
+### Question 5
+
+Write an R function that randomly configures the plugboard. This function will take no input but randomly selects a set of 13 pairs of letters.  The output object should be a $2 \times 13$ matrix for which each column represents a pair of letters. You may use the built-in R object `letters`, which contains the 26 letters of the alphabet as a character vector.  Name the function `plugboard`.
+
+Then, write an R function that encodes and decodes a message given a plugboard configuration set by the `plugboard` function from the previous question.  This function should take the output of the `plugboard` function as well as a message to be encoded (decoded) as inputs, and return an encoded (decoded) message.  You may wish to use the `gsub` function, which replaces a pattern in a character string with another specified pattern. The `tolower` function, which makes
+characters in a character vector lowercase, and `toupper` function, which capitalizes characters in a character vector, can also help.
+
+```{r}
+plugboard <- function(){
+  matrix(sample(letters, 26), nrow = 2, ncol = 13)
+}
+
+set.seed(111)
+pat <- plugboard()
+
+ATdecoder <- function(word,pat){
+  x <- unlist(strsplit(tolower(word),""))
+  if(all(x %in% pat[1,])){
+  paste(pat[2,match(x,pat[1,])],collapse="")
+  }else{
+  paste(pat[1,match(x,pat[2,])],collapse="")
+  }
+}
+
+ATdecoder("hey", pat)
+
+ATdecoder("qcx", pat)
+```
+To answer this question, after struggle for several hours, I had to ask in StackOverflow,
+
+(https://stackoverflow.com/questions/62473180/how-to-substitute-all-letters-in-a-word-for-a-pair-created-in-an-previous-functi)
+
+
+\vspace{0.2cm}
+
+***
+
+\vspace{0.2cm}
+
+## Group 13 - Immigration attitudes: the role of economic and cultural threat
+
+Why do the majority of voters in the U.S. and other developed countries oppose increased immigration? According to the conventional wisdom and many economic theories, people simply do not want to face additional competition on the labor market (*economic threat* hypothesis). Nonetheless, most comprehensive empirical tests have failed to confirm this hypothesis and it appears that people often support policies that are against their personal economic interest. At the same time, there has been growing evidence that immigration attitudes are rather influenced by various deep-rooted ethnic and cultural stereotypes (*cultural threat* hypothesis). Given the prominence of workers' economic concerns in the political discourse, how can these findings be reconciled? 
+
+This exercise is based in part on Malhotra, N., Margalit, Y. and Mo, C.H., 2013. "[Economic Explanations for Opposition to Immigration: Distinguishing between Prevalence and Conditional Impact](https://dx.doi.org/10.1111/ajps.12012)." *American Journal of Political Science*, Vol. 38, No. 3, pp. 393-433.
+
+The authors argue that, while job competition is not a prevalent threat and therefore may not be detected by aggregating survey responses, its *conditional* impact in selected industries may be quite sizable. To test their hypothesis, they conduct a unique survey of Americans' attitudes toward H-1B visas. The plurality of H-1B visas are occupied by Indian immigrants, who are skilled but ethnically distinct, which enables the authors to measure a specific skill set (high technology) that is threatened by a particular type of immigrant (H-1B visa holders). The data set `immig.csv` has the following variables:
+
+-----------------------------------------------------------------------------------------
+ Name                             Description
+ -------------------------------- -------------------------------------------------------
+ `age`                            Age (in years)
+ 
+ `female`                         `1` indicates female; `0` indicates male
+ 
+ `employed`                       `1` indicates employed; `0` indicates unemployed  
+ 
+ `nontech.whitcol`                `1` indicates non-tech white-collar work (e.g., law)
+ 
+ `tech.whitcol`                   `1` indicates high-technology work
+ 
+ `expl.prejud`                    Explicit negative stereotypes about Indians (continuous 
+                                  scale, 0-1)
+ 
+ `impl.prejud`                    Implicit bias against Indian Americans (continuous scale, 
+                                  0-1)
+                                  
+ `h1bvis.supp`                    Support for increasing H-1B visas (5-point scale, 0-1)
+ 
+ `indimm.supp`                    Support for increasing Indian immigration (5-point scale, 
+                                  0-1)
+-----------------------------------------------------------------------------------------
+
+The main outcome of interest (`h1bvis.supp`) was measured as a following survey item: "Some people have proposed that the U.S. government should increase the number of H-1B visas, which are allowances for U.S. companies to hire workers from foreign countries to work in highly skilled occupations (such as engineering, computer programming, and high-technology). Do you think the U.S. should increase, decrease, or keep about the same number of H-1B visas?" Another outcome (`indimm.supp`) similarly asked about the "the number of immigrants from India." Both variables have the following response options: `0` = "decrease a great deal", `0.25` = "decrease a little", `0.5` = "keep about the same", `0.75` = "increase a little", `1` = "increase a great deal".
+
+To measure explicit stereotypes (`expl.prejud`), respondents were asked to evaluate Indians on a series of traits: capable, polite, hardworking, hygienic, and trustworthy. All responses were then used to create a scale lying between `0` (only positive traits of Indians) to `1` (no positive traits of Indians). Implicit bias (`impl.prejud`) is measured via the *Implicit Association Test* (IAT) which is an experimental method designed to gauge the strength of associations linking social categories (e.g., European vs Indian American) to evaluative anchors (e.g., good vs bad). Individual who are prejudiced against Indians should be quicker at making classifications of faces and words when *European American* (*Indian American*) is paired with *good* (*bad*) than when *European American* (*Indian American*) is paired with *bad* (*good*). If you want, you can test yourself [here](https://implicit.harvard.edu/implicit/takeatest.html).
+
+### Question 1
+
+Start by examining the distribution of immigration attitudes (as factor variables). What is the proportion of people who are willing to increase the quota for high-skilled foreign professionals (`h1bvis.supp`) or support immigration from India (`indimm.supp`)?
+
+```{r include=FALSE}
+immig <- read.csv("https://raw.githubusercontent.com/umbertomig/intro-prob-stat-FGV/master/datasets/immig.csv")
+```
+
+```{r}
+hist(immig$h1bvis.supp, main = 'Distribution Visa', xlab = 'support')
+hist(immig$indimm.supp, main = 'Distribution Immigration', xlab = 'support')
+table(immig$h1bvis.supp)
+table(immig$indimm.supp)
+```
+It seems like more people or are indifferent or wanna decrease both variables.
+
+Now compare the distribution of two distinct measures of cultural threat: explicit stereotyping about Indians (`expl.prejud`) and implicit bias against Indian Americans (`impl.prejud`). In particular, create a scatterplot, add a linear regression line to it, and calculate the correlation coefficient. Based on these results, what can you say about their relationship?
+
+```{r}
+ggplot(immig, mapping = (aes(y=impl.prejud, x=expl.prejud))) + 
+  geom_point()+
+  geom_smooth(method = 'lm') +
+  labs(title = "stereotyping x bias", 
+       x = "stereotyping",
+       y = "bias")
+cor(immig$impl.prejud, immig$expl.prejud, use = "pairwise.complete.obs", method = "pearson")
+```
+The correlation between bias and stereotyping is positive but not very strong.
+
+### Question 2
+
+Compute the correlations between all four policy attitude and cultural threat measures. Do you agree that cultural threat is an important predictor of immigration attitudes as claimed in the literature?
+
+```{r}
+immig4 <- immig[c(1,2,6,7)]
+cor(immig4, use = "pairwise.complete.obs", method = "pearson")
+```
+The cultural threat is an important predictor. As seen here both bias and steriotyping have negative relationships with support for visa and immigration. Meaning that the higher the bias or the stereotyping less is the support.
+
+
+If the labor market hypothesis is correct, opposition to H-1B visas should also be more pronounced among those who are economically threatened by this policy such as individuals in the high-technology sector. At the same time, tech workers should not be more or less opposed to general Indian immigration because of any *economic* considerations. First, regress H-1B and Indian immigration attitudes on the indicator variable for tech workers (`tech.whitcol`). Do the results support the hypothesis? Is the relationship different from the one involving cultural threat and, if so, how?
+
+```{r}
+lm(immig$h1bvis.supp~immig$tech.whitcol)
+```
+There is a weak negative relationship between working in the tech industry and supporting indian immigration or visa. Therefore, the labor market hypothesis is correct.
+
+
+### Question 3
+
+When examining hypotheses, it is always important to have an appropriate comparison group. One may argue that comparing tech workers to everybody else as we did in Question 2 may be problematic due to a variety of confounding variables (such as skill level and employment status). First, create a single factor variable `group` which takes a value of `tech` if someone is employed in tech, `whitecollar` if someone is employed in other "white-collar" jobs (such as law or finance), `other` if someone is employed in any other sector, and `unemployed` if someone is unemployed. Then, compare the support for H-1B across these conditions by using the linear regression. Interpret the results: is this comparison more or less supportive of the labor market hypothesis than the one in Question 2?
+
+```{r}
+"It already has a group variable, Unemployed is '3', other is '2', whitecollar is '1' and tech is '0'"
+table(immig$group, immig$h1bvis.supp)
+lm(immig$h1bvis.supp~immig$group)
+```
+THis shows a positive correlation. SO more supportive than the previous.
+
+Now, one may also argue that those who work in the tech sector are disproportionately young and male which may confound our results. To account for this possibility, fit another linear regression but also include `age` and `female` as pre-treatment covariates (in addition to `group`). Does it change the results and, if so, how? 
+
+```{r}
+tech <- filter(immig, group == 0)
+table(tech$female, tech$h1bvis.supp)
+table(tech$age, tech$h1bvis.supp)
+lm(tech$h1bvis.supp~tech$female)
+lm(tech$h1bvis.supp~tech$age)
+```
+The regressions show that the support does not matter if they are young or old, male or female. 
+
+
+Finally, fit a linear regression model with all threat indicators (`group`, `expl.prejud`, `impl.prejud`) and calculate its $R^2$. How much of the variation is explained? Based on the model fit, what can you conclude about the role of threat factors?
+
+```{r}
+mr <- lm(h1bvis.supp ~ group + expl.prejud + impl.prejud, data = immig)
+mr
+summary(mr)
+```
+The R-squared is 0.035, then this model does not explain well the dependent variable. However, this model shows a positive relation between groups and support, and negative relation with bias and steriotypes and support for visa.
+
+
+### Question 4
+
+Besides economic and cultural threat, many scholars also argue that gender is an important predictor of immigration attitudes. While there is some evidence that women are slightly less opposed to immigration than men, it may also be true that gender conditions the very effect of other factors such as cultural threat. To see if it is indeed the case, fit a linear regression of H-1B support on the interaction between gender and implicit prejudice. Then, create a plot with the predicted level of H-1B support (y-axis) across the range of implicit bias (x-axis) by gender. Considering the results, would you agree that gender alters the relationship between cultural threat and immigration attitudes? 
+
+```{r}
+mrv <- lm(immig$impl.prejud ~ immig$female)
+plot(immig$impl.prejud, immig$h1bvis.supp)
+abline(mrv)
+```
+Yes
+
+Age is another important covariate. Fit two regression models in which H-1B support is either a linear or quadratic function of age. Compare the results by plotting the predicted levels of support (y-axis) across the whole age range (x-axis). Would you say that people become more opposed to immigration with age?
+```{r}
+ag<-lm(immig$h1bvis.supp~immig$age)
+ag1 <- lm(immig$h1bvis.supp~immig$age + immig$age * immig$age)
+plot(immig$age, immig$h1bvis.supp)
+abline(ag)
+
+
+
+```
+Yes, I would.
+
+### Question 5
+
+To corroborate your conclusions with regard to cultural threat, create separate binary variables for both prejudice indicators based on their median value (`1` if `>` than the median) and then compare average H-1B and Indian immigration attitudes (as numeric variables) depending on whether someone is implicitly or explicitly prejudiced (or both). What do these comparisons say about the role of cultural threat?
+
+```{r}
+immig$de <- ifelse(immig$expl.prejud > median(immig$expl.prejud, na.rm = TRUE), 1, 0)
+immig$di <- ifelse(immig$impl.prejud > median(immig$impl.prejud, na.rm = TRUE), 1, 0)
+lm(immig$h1bvis.supp~immig$de)
+lm(immig$h1bvis.supp~immig$di)
+
+```
+People who are explicitly prejudiced are more con indian immigration, however people implicintly are almost all con as the other group. This means that cultural threat plays a role on immigration.
+
+What about the role of economic threat? One may argue that tech workers are simply more or less prejudiced against Indians than others. To account for this possibility, investigate whether economic threat is in fact distinguishable from cultural threat as defined in the study. In particular, compare the distribution of cultural threat indicator variable using the Q-Q plot depending on whether someone is in the high-technology sector. Would you conclude that cultural and economic threat are really distinct?
+```{r}
+nam <- lm(immig$h1bvis.supp ~ immig$group)
+nam
+plot(nam)
+```
+In thesis, this shows that unemployed people tend to accept more indians imimgration, and tech industry workers accept less. Cultural threat plays a bigger role than economic threat, accordingly to these findings.
+
+\vspace{0.2cm}
+
+***

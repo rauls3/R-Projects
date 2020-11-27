@@ -1,0 +1,127 @@
+---
+title: "Homework 8 -- Intro to Probability and Statistics"
+author: "Raul Bassi"
+output: pdf_document
+---
+
+# Instructions:
+
+**Due:** 06/04 at 11:59PM.
+
+**What am I expecting?** An R Markdown with the answers. Note: this one can be done in paper and pencil. If you want to do so, do the problem and take pictures of it. Put the pictures in a PDF and send it.
+
+**Have fun!**
+
+# Question 1
+
+A factory produce valves, with 20\% chance of a given valve be broken. The valves are sold in boxes, containing ten valves in each box. If no broken valve is found, then they sell the box for \$10.00. With one broken valve, the box costs \$8.00. With two or three, the box is sold for \$6.00. More than three valves broken, they sell the box for \$2.00. What is the mean sales price for the boxes?
+
+A box contain ten valves, each valve has 80\% of not being broken, therefore:
+```{r}
+mean(((0.8^10*1)*10.00)+((0.8^9*0.2*10)*8.00)+((0.8^8*0.2^2*45)*6.00)+((0.8^7*0.2^3*120)*6.00)+((0.8^6*0.2^4*210)*2.00)+((0.8^5*0.2^5*252)*2.00)+((0.8^4*0.2^6*210)*2.00)+((0.8^3*0.2^7*120)*2.00)+((0.8^2*0.2^8*45)*2.00)+((0.8^1*0.2^9*10)*2.00)+((0.2^10*1)*2.00))
+```
+Making a binomial distribution of $n\choose k$ being n = 10 and k values from 0 to 10 and summing all events of having 0 broken valves, 1 broken until 10 broken valves in a box, multiplied by their values. All in all it is a mean of $(p + (1-p))^{10}$
+
+The answer is 6.482872
+
+# Question 2
+
+If a random variable $X$ has distribution:
+
+|   x  |  -2 |  -1  |  0  |   1  |   2  |
+|:----:|:---:|:----:|:---:|:----:|:----:|
+| f(x) | 1/2 | 1/10 | 1/5 | 1/10 | 1/10 |
+| F(x) | 1/2 |  3/5 | 4/5 | 9/10 |   1  |
+
+Compute the mean, the variance, and the standard deviation of $X$.
+```{r}
+-2*1/2+-1*1/10+0*1/5+1*1/10+2*1/10
+```
+
+
+| x |$x-\mathbb{E}(x^2)$ |$x-\mathbb{E}(x^2)^2$|$x-\mathbb{E}(x^2)^2f(x)$|
+|:-:|:------------------:|:-------------------:|:-----------------------:|
+|-2 |   -2+0.8 = -1.2    |    -1.2^2 = 1.44    |    1.44 x 0.5 = 0.720   |
+|-1 |   -1+0.8 = -0.2    |    -0.2^2 = 0.04    |    0.04 x 0.1 = 0.004   |
+| 0 |    0+0.8 =  0.8    |     0.8^2 = 0.64    |    0.64 x 0.2 = 0.128   |
+| 1 |    1+0.8 =  1.8    |     1.8^2 = 3.24    |    3.24 x 0.1 = 0.324   |
+| 2 |    2+0.8 =  2.8    |     2.8^2 = 7.84    |    7.84 x 0.1 = 0.784   |
+
+```{r}
+sqrt(1.96)
+```
+
+
+The mean is -0,8
+
+The variance is 1,96
+
+The standard deviation is 1.4
+
+
+# Question 3
+
+If a random variable $X$ has distribution (note: it is the same as in the previous problem):
+
+|   x  |  -2 |  -1  |  0  |   1  |   2  |
+|:----:|:---:|:----:|:---:|:----:|:----:|
+| f(x) | 1/2 | 1/10 | 1/5 | 1/10 | 1/10 |
+| F(x) | 1/2 |  3/5 | 4/5 | 9/10 |   1  |
+
+Compute the distribution of the following transformations:
+
+* $X^2$?
+
+|   x  |  0  |  1  |   4  |
+|:----:|:---:|:---:|:----:|
+| f(x) | 1/5 | 1/5 |  3/5 |
+| F(x) | 1/5 | 2/5 |   1  |
+
+
+
+* $3X$?
+
+|   x  |  -6 |  -3  |  0  |   3  |   6  |
+|:----:|:---:|:----:|:---:|:----:|:----:|
+| f(x) | 1/2 | 1/10 | 1/5 | 1/10 | 1/10 |
+| F(x) | 1/2 |  3/5 | 4/5 | 9/10 |   1  |
+
+# Question 4
+
+Prove the following statements:
+
+* Let two constants, $a \in \mathbb{R}$ and $b \in \mathbb{R}$, and a discrete random variable $X$. Prove that $\mathbb{E}(aX+b) = a\mathbb{E}(X) + b$.
+
+$$\mathbb{E}(aX+b) = \sum x(ax+b)p(x)$$
+$$\mathbb{E}(aX+b) = \sum x .a.x.p(x)+\sum x .b.p(x)$$
+$$\mathbb{E}(aX+b) = a(\sum x .x.p(x))+b(\sum x.p(x))$$
+$$1 =\sum x p(x) = \mathbb{E}(x)$$
+$$\mathbb{E}(aX+b) = a\mathbb{E}(x)+b$$
+
+* Let two constants, $a \in \mathbb{R}$ and $b \in \mathbb{R}$, and a discrete random variable $X$. Prove that $\mathbb{V}(aX+b) = a^2\mathbb{V}(X)$.
+
+$$\mathbb{V}(aX+b)=\mathbb{E}((ax+b)^2) - (\mathbb{E}(aX+b))^2$$
+$$=\mathbb{E}(ax^2 + 2axb + b^2) - (\mathbb{E}(aX+b))(\mathbb{E}(aX+b))$$
+$$=a^2\mathbb{E}(X^2) + 2ab\mathbb{E}(X) + b^2 - a^2(\mathbb{E}(X))^2 - 2ab\mathbb{E}(x)-b^2$$
+$$=a^2\mathbb{E}(X^2) - a^2(\mathbb{E}(X))^2$$
+$$a^2[\mathbb{E}(X^2) - (\mathbb{E}(X))^2]$$
+$$\mathbb{E}(X^2) - (\mathbb{E}(X))^2 = \mathbb{V}(X)$$
+$$\mathbb{V}(aX+b) = a^2\mathbb{V}(X)$$
+
+
+
+
+
+* Let $a \in \mathbb{R}$ a constant. Prove that $\mathbb{E}(a) = a$ and that $\mathbb{V}(a) = 0$.
+$f(x_i) = a$
+* $\mathbb{E}(x) = \sum x_if(x_i)$
+* $\mathbb{E}(a) = \sum x_if(x_i)$
+* $f(x_i) = a + 0*x_i$
+* Therefore, it does not matter what n value multiplies Xi bc it will always be 0 + a. Thus:
+* $\mathbb{E}(a) = a$
+
+Knowing this and given that:
+
+$$\mathbb{E}(X^2) - (\mathbb{E}(X))^2 = \mathbb{V}(X)$$
+
+$$\mathbb{V}(X) = (a^2 - a^2) = 0$$

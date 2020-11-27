@@ -1,0 +1,44 @@
+---
+title: "DATABASE SHOW-OFF"
+author: "Isadora Garcia, Eduardo Benchimol, João Pedro Apolaro and Raul Bassi"
+date: "17/09/2020"
+output: pdf_document
+---
+
+```{r echo = FALSE}
+library(tidyverse)
+brut <- read.csv('https://raw.githubusercontent.com/2020PB/police-brutality/data_build/all-locations.csv')
+library(dplyr)
+library(ggplot2)
+```
+```{r echo = FALSE}
+pb <- brut[c(1,3,4,5)]
+blm <- read.csv("C:/Users/PC User/Desktop/Raul/Econometria/HW/BLM_cities.csv")
+```
+
+# ==  DATASETS  == #
+
+
+## DATASET 1 BLACK LIVES MATTER PROTESTS, USA CITIES AND POPULATION ##
+```{r}
+summary(blm)
+head(blm)
+hist(blm$blackmayor, main = "Cities with protests which have a black mayor", xlab = "0 = no 1 = yes", ylab = "Frequency", col = "black")
+hist(blm$PovertyRate, main = "Poverty rate", xlab = "Percent of population that is poor", ylab = "Frequency", col = "blue")
+hist(blm$BlackPovertyRate, main = "Poverty rate among black", xlab = "Percent of black population", ylab = "Frequency", col = "orange")
+table(blm$blackmayor, blm$mayorrep)
+```
+
+This DATASEt has 52 variables, including indicators of education, population, politic representation, protests and violence.
+
+The link to download it is: https://dataverse.harvard.edu/file.xhtml?persistentId=doi:10.7910/DVN/L2GSK6/RMDC1M&version=1.0
+
+## DATASET 2 POLICE BRUTALITY DURING PROTESTS ##
+
+```{r}
+head(pb)
+tail(pb)
+```
+
+This dataset has the police brutality events described during BLM protests.
+
